@@ -18,6 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut file = unsafe { File::from_raw_fd(received_fd as RawFd) };
 
     let mut contents = String::new();
+    println!("read to string");
     file.read_to_string(&mut contents)?;
 
     println!("File contents:\n{}", contents);
