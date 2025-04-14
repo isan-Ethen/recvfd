@@ -1,0 +1,7 @@
+[package]
+name = "recvfd"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+redox_syscall = "0.5.11"
