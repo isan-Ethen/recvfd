@@ -14,20 +14,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let chan_fd =
         syscall::open(fd_path, syscall::O_RDWR | syscall::O_CREAT).map_err(from_syscall_error)?;
 
+    println!("call named dup");
+    let receiver_fd = syscall::dup(chan_fd, b"recvfd").map_err(from_syscall_error)?;
+    println!("raw fd: {}", receiver_fd);
+
     thread::sleep(std::time::Duration::from_secs(3));
 
-    println!("call named dup");
-    let received_fd = syscall::dup(chan_fd, b"recvfd").map_err(from_syscall_error)?;
-    println!("raw fd: {}", received_fd);
-
     println!("as raw fd");
-    let mut file = unsafe { File::from_raw_fd(received_fd as RawFd) };
+    let mut file = unsafe { File::from_raw_fd(receiver_fd as RawFd) };
 
     let mut contents = String::new();
     println!("read to string");
     file.read_to_string(&mut contents)?;
 
-    println!("File contents:\n{}", contents);
+    println!("file contents:\n{}", contents);
 
     Ok(())
 }
