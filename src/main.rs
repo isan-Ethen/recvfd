@@ -10,7 +10,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let fd_path = format!("chan:{}", "/tmp/unix-domain-socket/test");
 
     println!("receive file descriptor");
-    let received_fd = syscall::open(fd_path, syscall::O_RDWR).map_err(from_syscall_error)?;
+    let received_fd =
+        syscall::open(fd_path, syscall::O_RDWR | syscall::O_CREAT).map_err(from_syscall_error)?;
 
     println!("raw fd: {}", received_fd);
 
