@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{self, Read};
 use std::os::unix::io::{FromRawFd, RawFd};
+use std::thread;
 
 fn from_syscall_error(error: syscall::Error) -> io::Error {
     io::Error::from_raw_os_error(error.errno as i32)
@@ -12,6 +13,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("receive file descriptor");
     let chan_fd =
         syscall::open(fd_path, syscall::O_RDWR | syscall::O_CREAT).map_err(from_syscall_error)?;
+
+    thread::sleep(std::time::Duration::from_secs(3));
 
     println!("call named dup");
     let received_fd = syscall::dup(chan_fd, b"recvfd").map_err(from_syscall_error)?;
