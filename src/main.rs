@@ -10,9 +10,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let fd_path = format!("chan:{}", "/tmp/unix-domain-socket/test");
 
     println!("receive file descriptor");
-    let received_fd =
+    let chan_fd =
         syscall::open(fd_path, syscall::O_RDWR | syscall::O_CREAT).map_err(from_syscall_error)?;
 
+    println!("call named dup");
+    let received_fd = syscall::dup(chan_fd, b"recvfd").map_err(from_syscall_error)?;
     println!("raw fd: {}", received_fd);
 
     println!("as raw fd");
