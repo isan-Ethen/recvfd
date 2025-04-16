@@ -16,7 +16,7 @@ fn listen_gate(path: &str) -> Result<RawFd> {
     // make socket
     let gate = unsafe { socket(libc::AF_UNIX, libc::SOCK_DGRAM, 0) };
     if gate < 0 {
-        return Err(());
+        return Err(io::Error::last_os_error);
     }
 
     let c_path = CString::new(path)
@@ -58,7 +58,7 @@ fn listen_gate(path: &str) -> Result<RawFd> {
     Ok(gate)
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
     let fd_path = format!("chan:{}", "/tmp/unix-domain-socket/test");
 
     println!("receive file descriptor");
@@ -69,7 +69,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     thread::sleep(std::time::Duration::from_secs(3));
 
     println!("call named dup");
-    let receiver_fd = syscall::dup(chan_fd, b"recvfd").map_err(from_syscall_error)?;
+    let receiver_fd = syscall::dup(
+        chan_fd.try_into().map_err(|_| io::Error::last_os_error()),
+        b"recvfd",
+    )
+    .map_err(from_syscall_error)?;
     println!("raw fd: {}", receiver_fd);
 
     println!("as raw fd");
