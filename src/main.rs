@@ -61,27 +61,29 @@ fn listen_gate(path: &str) -> Result<RawFd> {
 
 fn main() -> Result<()> {
     let fd_path = "/tmp/uds/test";
-    // let scheme_path = format!("chan:{}", fd_path);
-    // println!("scheme path: {}", scheme_path);
+    let scheme_path = format!("chan:{}", fd_path);
+    println!("scheme path: {}", scheme_path);
 
-    println!("listen gate");
-    let receiver_fd = listen_gate(&fd_path)?;
+    // println!("listen gate");
+    // let receiver_fd = listen_gate(&fd_path)?;
+    let receiver_fd = syscall::open(scheme_path, syscall::O_RDWR)?;
 
     println!("sleep 3 seconds");
     thread::sleep(std::time::Duration::from_secs(3));
 
     println!("call named dup");
-    let receiver_fd = syscall::dup(
-        receiver_fd
-            .try_into()
-            .map_err(|_| io::Error::last_os_error())?,
-        b"recvfd",
-    )
-    .map_err(from_syscall_error)?;
+    // let receiver_fd = syscall::dup(
+    //     receiver_fd
+    //         .try_into()
+    //         .map_err(|_| io::Error::last_os_error())?,
+    //     b"recvfd",
+    // )
+    // .map_err(from_syscall_error)?;
+    let fd = syscall::dup(receiver_fd, b"recvfd").map_err(from_syscall_error)?;
     println!("raw fd: {}", receiver_fd);
 
     println!("as raw fd");
-    let mut file = unsafe { File::from_raw_fd(receiver_fd as RawFd) };
+    let mut file = unsafe { File::from_raw_fd(fd as RawFd) };
 
     let mut contents = String::new();
     println!("read to string");
