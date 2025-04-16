@@ -22,7 +22,7 @@ fn listen_gate(path: &str) -> Result<RawFd> {
     let c_path = CString::new(path)
         .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "path contains null bytes"))?;
 
-    println!("initialize socket addr");
+    println!("initialize gate_addr");
     let mut gate_addr: libc::sockaddr_un = unsafe { mem::zeroed() };
     gate_addr.sun_family = libc::AF_UNIX as libc::sa_family_t;
 
@@ -49,7 +49,7 @@ fn listen_gate(path: &str) -> Result<RawFd> {
             mem::size_of::<libc::sockaddr_un>() as libc::socklen_t,
         )
     };
-    println!("bind result");
+    println!("bind result: {}", bind_result);
     if bind_result < 0 {
         let err = io::Error::last_os_error();
         unsafe { libc::close(gate) };
