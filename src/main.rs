@@ -66,7 +66,7 @@ fn main() -> Result<()> {
 
     // println!("listen gate");
     // let receiver_fd = listen_gate(&fd_path)?;
-    let receiver_fd = syscall::open(scheme_path, syscall::O_RDWR)?;
+    let receiver_fd = syscall::open(scheme_path, syscall::O_RDWR).map_err(from_syscall_error)?;
 
     println!("sleep 3 seconds");
     thread::sleep(std::time::Duration::from_secs(3));
