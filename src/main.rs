@@ -64,22 +64,13 @@ fn main() -> Result<()> {
     let scheme_path = format!("chan:{}", fd_path);
     println!("scheme path: {}", scheme_path);
 
-    // println!("listen gate");
-    // let receiver_fd = listen_gate(&fd_path)?;
-    let receiver_fd = syscall::open(scheme_path, syscall::O_RDWR | syscall::O_CREAT)
-        .map_err(from_syscall_error)?;
+    println!("listen gate");
+    let receiver_fd = listen_gate(&scheme_path)?;
 
     println!("sleep 3 seconds");
     thread::sleep(std::time::Duration::from_secs(3));
 
     println!("call named dup");
-    // let receiver_fd = syscall::dup(
-    //     receiver_fd
-    //         .try_into()
-    //         .map_err(|_| io::Error::last_os_error())?,
-    //     b"recvfd",
-    // )
-    // .map_err(from_syscall_error)?;
     let fd = syscall::dup(receiver_fd, b"recvfd").map_err(from_syscall_error)?;
     println!("raw fd: {}", receiver_fd);
 
