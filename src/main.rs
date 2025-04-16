@@ -1,4 +1,4 @@
-use libc::{bind, connect, socket};
+use libc::{bind, socket};
 use std::ffi::CString;
 use std::fs::File;
 use std::io::{self, Read};
@@ -16,7 +16,7 @@ fn listen_gate(path: &str) -> Result<RawFd> {
     // make socket
     let gate = unsafe { socket(libc::AF_UNIX, libc::SOCK_DGRAM, 0) };
     if gate < 0 {
-        return Err(io::Error::last_os_error);
+        return Err(io::Error::last_os_error());
     }
 
     let c_path = CString::new(path)
@@ -70,7 +70,7 @@ fn main() -> Result<()> {
 
     println!("call named dup");
     let receiver_fd = syscall::dup(
-        chan_fd.try_into().map_err(|_| io::Error::last_os_error()),
+        chan_fd.try_into().map_err(|_| io::Error::last_os_error())?,
         b"recvfd",
     )
     .map_err(from_syscall_error)?;
