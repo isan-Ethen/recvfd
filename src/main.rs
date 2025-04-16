@@ -27,20 +27,17 @@ fn listen_gate(path: &str) -> Result<RawFd> {
     gate_addr.sun_family = libc::AF_UNIX as libc::sa_family_t;
 
     // convert cstring to c_char array
-    unsafe {
-        let path_bytes = c_path.as_bytes_with_nul();
-        let dest_len = gate_addr.sun_path.len();
+    let path_bytes = c_path.as_bytes_with_nul();
 
-        if path_bytes.len() > gate_addr.sun_path.len() {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "path is too long",
-            ));
-        }
+    if path_bytes.len() > gate_addr.sun_path.len() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "path is too long",
+        ));
+    }
 
-        for (i, &byte) in path_bytes.iter().enumerate() {
-            gate_addr.sun_path[i] = byte as libc::c_char;
-        }
+    for (i, &byte) in path_bytes.iter().enumerate() {
+        gate_addr.sun_path[i] = byte as libc::c_char;
     }
 
     // bind socket
