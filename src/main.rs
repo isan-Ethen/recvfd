@@ -59,7 +59,7 @@ fn listen_gate(path: &str) -> Result<RawFd> {
 }
 
 fn main() -> Result<()> {
-    let fd_path = "/tmp/unix-domain-socket/test";
+    let fd_path = "/tmp/uds/test";
     // let scheme_path = format!("chan:{}", fd_path);
     // println!("scheme path: {}", scheme_path);
 
