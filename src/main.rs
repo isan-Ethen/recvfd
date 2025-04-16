@@ -1,87 +1,76 @@
-// use libc::{
-//     bind, connect,
-//     header::{
-//         arpa_inet::inet_aton,
-//         errno::{EAFNOSUPPORT, EDOM, EFAULT, EINVAL, ENOSYS, EOPNOTSUPP, EPROTONOSUPPORT},
-//         netinet_in::{in_addr, in_port_t, sockaddr_in},
-//         string::strnlen,
-//         sys_socket::{constants::*, msghdr, sa_family_t, sockaddr, socklen_t},
-//         sys_time::timeval,
-//         sys_un::sockaddr_un,
-//     },
-//     recvmsg, sendmsg, socket,
-// };
+use libc::{bind, connect, socket};
 use std::ffi::CString;
 use std::fs::File;
 use std::io::{self, Read};
 use std::mem;
-use std::os::raw::c_char;
 use std::os::unix::io::{FromRawFd, RawFd};
 use std::thread;
+
+type Result<T> = std::result::Result<T, io::Error>;
 
 fn from_syscall_error(error: syscall::Error) -> io::Error {
     io::Error::from_raw_os_error(error.errno as i32)
 }
 
-// fn str2c_char_array(s: String) -> Result<[c_char; 108]> {
-//     if s.len() > 108 {
-//         eprintln!("path is longer than 108");
-//         return Err(());
-//     }
-//     match CString::new(s) {
-//         Ok(c_string) => {
-//             let bytes = c_string.as_bytes_with_nul();
-//
-//             let mut array = [0 as c_char; 108];
-//             for (i, &byte) in bytes.iter().enumerate().take(108) {
-//                 array[i] = byte as c_char;
-//             }
-//             Ok(array)
-//         }
-//         Err(_) => Err(()),
-//     }
-// }
-//
-// unsafe fn listen_gate(path: String) -> Result<usize> {
-//     let gate = socket(AF_UNIX, SOCK_DGRAM, 0);
-//     if gate < 0 {
-//         return Err(());
-//     }
-//
-//     let sun_path: [c_char; 108] = str2c_char_array(path)?;
-//
-//     let gate_addr: sockaddr_un = sockaddr_un {
-//         sun_family: syscall::AF_UNIX,
-//         sun_path,
-//     };
-//
-//     if bind(
-//         gate,
-//         &gate_addr as *const sockaddr,
-//         mem::size_of_val::<socklen_t>(gate_addr),
-//     ) < 0
-//     {
-//         eprintln!("bind gate error");
-//         return Err(());
-//     }
-//
-//     Ok(gate)
-// }
+fn listen_gate(path: &str) -> Result<RawFd> {
+    // make socket
+    let gate = unsafe { socket(libc::AF_UNIX, libc::SOCK_DGRAM, 0) };
+    if gate < 0 {
+        return Err(());
+    }
+
+    let c_path = CString::new(path)
+        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "path contains null bytes"))?;
+
+    // initialize socket addr
+    let mut gate_addr: libc::sockaddr_un = unsafe { mem::zeroed() };
+    gate_addr.sun_family = libc::AF_UNIX as libc::sa_family_t;
+
+    // convert cstring to c_char array
+    unsafe {
+        let path_bytes = c_path.as_bytes_with_nul();
+        let dest_len = gate_addr.sun_path.len();
+
+        if path_bytes.len() > gate_addr.sun_path.len() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "path is too long",
+            ));
+        }
+
+        for (i, &byte) in path_bytes.iter().enumerate() {
+            gate_addr.sun_path[i] = byte as libc::c_char;
+        }
+    }
+
+    // bind socket
+    if bind(
+        gate,
+        &gate_addr as *const _ as *const libc::sockaddr,
+        mem::size_of::<libc::sockaddr_un>() as libc::socklen_t,
+    ) < 0
+    {
+        let err = io::Error::last_os_error();
+        unsafe { libc::close(gate) };
+        return Err(err);
+    }
+
+    Ok(gate)
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let fd_path = format!("chan:{}", "/tmp/unix-domain-socket/test");
 
     println!("receive file descriptor");
-    let chan_fd =
-        syscall::open(fd_path, syscall::O_RDWR | syscall::O_CREAT).map_err(from_syscall_error)?;
+    let chan_fd = listen_gate(&fd_path)?;
 
     // let gate = unsafe { listen_gate(&fd_path)? };
 
-    println!("call named dup");
-    let receiver_fd = syscall::dup(chan_fd, b"listen").map_err(from_syscall_error)?;
-    println!("raw fd: {}", receiver_fd);
-
     thread::sleep(std::time::Duration::from_secs(3));
+
+    println!("call named dup");
+    let receiver_fd = syscall::dup(chan_fd, b"recvfd").map_err(from_syscall_error)?;
+    println!("raw fd: {}", receiver_fd);
 
     println!("as raw fd");
     let mut file = unsafe { File::from_raw_fd(receiver_fd as RawFd) };
