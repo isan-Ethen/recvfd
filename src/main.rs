@@ -61,18 +61,18 @@ fn listen_gate(path: &str) -> Result<RawFd> {
 
 fn main() -> Result<()> {
     let fd_path = "/tmp/uds/test";
-    let scheme_path = format!("chan:{}", fd_path);
-    println!("scheme path: {}", scheme_path);
+    // let scheme_path = format!("chan:{}", fd_path);
+    // println!("scheme path: {}", scheme_path);
 
     println!("listen gate");
-    let receiver_fd = listen_gate(&scheme_path)?;
+    let receiver_fd = listen_gate(&fd_path)?;
 
     println!("sleep 3 seconds");
     thread::sleep(std::time::Duration::from_secs(3));
 
     println!("call named dup");
     let fd = syscall::dup(receiver_fd, b"recvfd").map_err(from_syscall_error)?;
-    println!("raw fd: {}", receiver_fd);
+    println!("raw fd: {}", fd);
 
     println!("as raw fd");
     let mut file = unsafe { File::from_raw_fd(fd as RawFd) };
