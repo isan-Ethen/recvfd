@@ -36,7 +36,7 @@ fn listen_gate(path: &str) -> Result<RawFd> {
         ));
     }
 
-    pritnln!("write path to gate_addr");
+    println!("write path to gate_addr");
     for (i, &byte) in path_bytes.iter().enumerate() {
         gate_addr.sun_path[i] = byte as libc::c_char;
     }
