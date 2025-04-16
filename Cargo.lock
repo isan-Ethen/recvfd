@@ -29,6 +29,7 @@ dependencies = [
 name = "recvfd"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "libredox",
  "redox_syscall",
 ]
