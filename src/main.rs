@@ -70,7 +70,9 @@ fn main() -> Result<()> {
 
     println!("call named dup");
     let receiver_fd = syscall::dup(
-        chan_fd.try_into().map_err(|_| io::Error::last_os_error())?,
+        receiver_fd
+            .try_into()
+            .map_err(|_| io::Error::last_os_error())?,
         b"recvfd",
     )
     .map_err(from_syscall_error)?;
