@@ -44,12 +44,14 @@ fn listen_gate(path: &str) -> Result<RawFd> {
     }
 
     // bind socket
-    if bind(
-        gate,
-        &gate_addr as *const _ as *const libc::sockaddr,
-        mem::size_of::<libc::sockaddr_un>() as libc::socklen_t,
-    ) < 0
-    {
+    let bind_result = unsafe {
+        bind(
+            gate,
+            &gate_addr as *const _ as *const libc::sockaddr,
+            mem::size_of::<libc::sockaddr_un>() as libc::socklen_t,
+        )
+    };
+    if bind_result < 0 {
         let err = io::Error::last_os_error();
         unsafe { libc::close(gate) };
         return Err(err);
