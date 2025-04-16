@@ -49,6 +49,7 @@ fn listen_gate(path: &str) -> Result<RawFd> {
             mem::size_of::<libc::sockaddr_un>() as libc::socklen_t,
         )
     };
+    println!("bind result");
     if bind_result < 0 {
         let err = io::Error::last_os_error();
         unsafe { libc::close(gate) };
@@ -66,6 +67,7 @@ fn main() -> Result<()> {
     println!("listen gate");
     let receiver_fd = listen_gate(&fd_path)?;
 
+    println!("sleep 3 seconds");
     thread::sleep(std::time::Duration::from_secs(3));
 
     println!("call named dup");
