@@ -71,7 +71,8 @@ fn main() -> Result<()> {
     thread::sleep(std::time::Duration::from_secs(3));
 
     println!("call named dup");
-    let fd = syscall::dup(receiver_fd, b"recvfd").map_err(from_syscall_error)?;
+    let fd = syscall::dup(receiver_fd.try_into().expect("invalid argument"), b"recvfd")
+        .map_err(from_syscall_error)?;
     println!("raw fd: {}", fd);
 
     println!("as raw fd");
