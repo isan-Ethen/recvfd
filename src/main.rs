@@ -13,7 +13,7 @@ fn from_syscall_error(error: syscall::Error) -> io::Error {
 }
 
 fn listen_gate(path: &str) -> Result<RawFd> {
-    // make socket
+    println!("make socket");
     let gate = unsafe { socket(libc::AF_UNIX, libc::SOCK_DGRAM, 0) };
     if gate < 0 {
         return Err(io::Error::last_os_error());
@@ -22,13 +22,13 @@ fn listen_gate(path: &str) -> Result<RawFd> {
     let c_path = CString::new(path)
         .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "path contains null bytes"))?;
 
-    // initialize socket addr
+    println!("initialize socket addr");
     let mut gate_addr: libc::sockaddr_un = unsafe { mem::zeroed() };
     gate_addr.sun_family = libc::AF_UNIX as libc::sa_family_t;
 
     let path_bytes = c_path.as_bytes_with_nul();
 
-    // check len of path
+    println!("check len of path");
     if path_bytes.len() > gate_addr.sun_path.len() {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
@@ -36,12 +36,12 @@ fn listen_gate(path: &str) -> Result<RawFd> {
         ));
     }
 
-    // write path to gate_addr
+    pritnln!("write path to gate_addr");
     for (i, &byte) in path_bytes.iter().enumerate() {
         gate_addr.sun_path[i] = byte as libc::c_char;
     }
 
-    // bind socket
+    println!("bind socket");
     let bind_result = unsafe {
         bind(
             gate,
@@ -63,8 +63,6 @@ fn main() -> Result<()> {
 
     println!("receive file descriptor");
     let chan_fd = listen_gate(&fd_path)?;
-
-    // let gate = unsafe { listen_gate(&fd_path)? };
 
     thread::sleep(std::time::Duration::from_secs(3));
 
