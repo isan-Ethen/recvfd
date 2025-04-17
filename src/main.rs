@@ -67,13 +67,13 @@ fn main() -> Result<()> {
     println!("listen gate");
     let receiver_fd = listen_gate(&fd_path)?;
 
-    println!("sleep 3 seconds");
-    thread::sleep(std::time::Duration::from_secs(3));
-
     println!("call named dup");
     let fd = syscall::dup(receiver_fd.try_into().expect("invalid argument"), b"recvfd")
         .map_err(from_syscall_error)?;
     println!("raw fd: {}", fd);
+
+    println!("sleep 3 seconds");
+    thread::sleep(std::time::Duration::from_secs(3));
 
     println!("as raw fd");
     let mut file = unsafe { File::from_raw_fd(fd as RawFd) };
