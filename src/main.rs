@@ -61,11 +61,11 @@ fn listen_gate(path: &str) -> Result<RawFd> {
 
 fn main() -> Result<()> {
     let fd_path = "/tmp/uds/test";
-    // let scheme_path = format!("chan:{}", fd_path);
-    // println!("scheme path: {}", scheme_path);
+    let scheme_path = format!("chan:{}", fd_path);
+    println!("scheme path: {}", scheme_path);
 
     println!("listen gate");
-    let receiver_fd = listen_gate(&fd_path)?;
+    let receiver_fd = listen_gate(&scheme_path)?;
     println!("accept socket");
     let conn_fd = unsafe { libc::accept(receiver_fd, std::ptr::null_mut(), std::ptr::null_mut()) };
     if conn_fd < 0 {
