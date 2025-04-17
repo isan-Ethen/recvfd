@@ -66,14 +66,18 @@ fn main() -> Result<()> {
 
     println!("listen gate");
     let receiver_fd = listen_gate(&fd_path)?;
-
+    println!("accept socket");
+    let conn_fd = unsafe { libc::accept(receiver_fd, std::ptr::null_mut(), std::ptr::null_mut()) };
+    if conn_fd < 0 {
+        return Err(io::Error::last_os_error());
+    }
+    // println!("sleep 3 seconds");
+    // thread::sleep(std::time::Duration::from_secs(3));
     println!("call named dup");
-    let fd = syscall::dup(receiver_fd.try_into().expect("invalid argument"), b"recvfd")
+    // let fd = syscall::dup(receiver_fd.try_into().expect("invalid argument"), b"recvfd")
+    let fd = syscall::dup(conn_fd.try_into().expect("invalid argument"), b"recvfd")
         .map_err(from_syscall_error)?;
     println!("raw fd: {}", fd);
-
-    println!("sleep 3 seconds");
-    thread::sleep(std::time::Duration::from_secs(3));
 
     println!("as raw fd");
     let mut file = unsafe { File::from_raw_fd(fd as RawFd) };
