@@ -81,7 +81,7 @@ fn main() -> Result<()> {
 
     println!("as raw fd");
     // let mut file = unsafe { File::from_raw_fd(fd as RawFd) };
-    let mut file = unsafe { File::from_raw_fd(fd as RawFd) };
+    let mut file = unsafe { File::from_raw_fd(conn_fd as RawFd) };
 
     let mut contents = String::new();
     println!("read to string");
