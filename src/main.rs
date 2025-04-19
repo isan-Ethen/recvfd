@@ -1,6 +1,7 @@
 use libc::{bind, socket, write};
 use std::ffi::CString;
 use std::fs::File;
+use std::fs::File;
 use std::io::{self, Read};
 use std::mem;
 use std::os::unix::io::{FromRawFd, RawFd};
@@ -60,6 +61,15 @@ fn listen_gate(path: &str) -> Result<RawFd> {
 }
 
 fn main() -> Result<()> {
+    let files_fd = syscall::open("/scheme/thisproc/current/filetable", O_RDONLY)
+        .map_err(from_syscall_error)? as RawFd;
+    let file = unsafe { File::from_raw_fd(files_fd) };
+    let mut contents = String::new();
+    println!("read to string");
+    file.read_to_string(&mut contents)?;
+
+    println!("file contents:\n{}", contents);
+
     let fd_path = "/tmp/uds/test";
     let scheme_path = format!("/scheme/chan{}", fd_path);
     println!("scheme path: {}", scheme_path);
