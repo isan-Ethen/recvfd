@@ -1,7 +1,6 @@
 use libc::{bind, socket, write};
 use std::ffi::CString;
 use std::fs::File;
-use std::fs::File;
 use std::io::{self, Read};
 use std::mem;
 use std::os::unix::io::{FromRawFd, RawFd};
