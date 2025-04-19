@@ -61,9 +61,12 @@ fn listen_gate(path: &str) -> Result<RawFd> {
 }
 
 fn main() -> Result<()> {
-    let files_fd = syscall::open("/scheme/thisproc/current/filetable", libc::O_RDONLY)
-        .map_err(from_syscall_error)? as RawFd;
-    let file = unsafe { File::from_raw_fd(files_fd) };
+    let files_fd = syscall::open(
+        "/scheme/thisproc/current/filetable",
+        syscall::O_RDONLY as usize,
+    )
+    .map_err(from_syscall_error)? as RawFd;
+    let mut file = unsafe { File::from_raw_fd(files_fd) };
     let mut contents = String::new();
     println!("read to string");
     file.read_to_string(&mut contents)?;
