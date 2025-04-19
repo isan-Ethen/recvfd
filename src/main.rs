@@ -82,6 +82,7 @@ fn main() -> Result<()> {
         .map_err(from_syscall_error)?;
     println!("raw fd: {}", fd);
 
+    let message = "hello from receiver";
     let res = unsafe {
         write(
             socket_fd.try_into().unwrap(),
