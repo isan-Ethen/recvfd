@@ -1,5 +1,4 @@
 use libc::{bind, socket};
-use redox_rt::proc::FdGuard;
 use std::ffi::CString;
 use std::fs::File;
 use std::io::{self, Read};
@@ -66,9 +65,15 @@ fn main() -> Result<()> {
     println!("scheme path: {}", scheme_path);
 
     println!("listen gate");
-    let socket_fd = FdGuard::new(listen_gate(&scheme_path)?);
+    let socket_fd = listen_gate(&scheme_path)?;
     println!("accept socket");
-    let conn_fd = unsafe { libc::accept(*socket_fd, std::ptr::null_mut(), std::ptr::null_mut()) };
+    let conn_fd = unsafe {
+        libc::accept(
+            socket_fd.try_into().unwrap(),
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+        )
+    };
     if conn_fd < 0 {
         return Err(io::Error::last_os_error());
     }
