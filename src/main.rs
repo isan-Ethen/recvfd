@@ -1,4 +1,4 @@
-use libc::{bind, socket};
+use libc::{bind, socket, write};
 use std::ffi::CString;
 use std::fs::File;
 use std::io::{self, Read};
@@ -61,7 +61,7 @@ fn listen_gate(path: &str) -> Result<RawFd> {
 
 fn main() -> Result<()> {
     let fd_path = "/tmp/uds/test";
-    let scheme_path = format!("/scheme/file{}", fd_path);
+    let scheme_path = format!("/scheme/chan{}", fd_path);
     println!("scheme path: {}", scheme_path);
 
     println!("listen gate");
@@ -77,23 +77,28 @@ fn main() -> Result<()> {
     if conn_fd < 0 {
         return Err(io::Error::last_os_error());
     }
-    // println!("sleep 3 seconds");
-    // thread::sleep(std::time::Duration::from_secs(3));
-    // println!("call named dup");
-    // let fd = syscall::dup(receiver_fd.try_into().expect("invalid argument"), b"recvfd")
-    // let fd = syscall::dup(conn_fd.try_into().expect("invalid argument"), b"recvfd")
-    // .map_err(from_syscall_error)?;
-    // println!("raw fd: {}", fd);
+    println!("call named dup");
+    let fd = syscall::dup(conn_fd.try_into().expect("invalid argument"), b"recvfd")
+        .map_err(from_syscall_error)?;
+    println!("raw fd: {}", fd);
 
-    println!("as raw fd");
+    let res = unsafe {
+        write(
+            socket_fd.try_into().unwrap(),
+            message.as_ptr() as *const std::os::raw::c_void,
+            message.len(),
+        )
+    };
+
+    // println!("as raw fd");
     // let mut file = unsafe { File::from_raw_fd(fd as RawFd) };
-    let mut file = unsafe { File::from_raw_fd(conn_fd as RawFd) };
+    // // let mut file = unsafe { File::from_raw_fd(conn_fd as RawFd) };
 
-    let mut contents = String::new();
-    println!("read to string");
-    file.read_to_string(&mut contents)?;
+    // let mut contents = String::new();
+    // println!("read to string");
+    // file.read_to_string(&mut contents)?;
 
-    println!("file contents:\n{}", contents);
+    // println!("file contents:\n{}", contents);
 
     Ok(())
 }
